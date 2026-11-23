@@ -1,0 +1,1036 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RRB CBT - UNESCO CITES</title>
+<style>
+    :root {
+        --bg-color: #121212;
+        --surface-color: #1e1e1e;
+        --primary-cyan: #00e5ff;
+        --primary-blue: #2979ff;
+        --text-primary: #ffffff;
+        --text-secondary: #b3b3b3;
+        --border-color: #333333;
+        
+        --color-not-visited: #9e9e9e;
+        --color-not-answered: #f44336;
+        --color-answered: #4caf50;
+        --color-marked: #9c27b0;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* 100dvh prevents mobile browser URL bars from hiding the bottom elements */
+    body { background-color: var(--bg-color); color: var(--text-primary); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+    
+    /* Views */
+    .view { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+    .view.active { display: flex; }
+    
+    /* Landing Page */
+    .landing-container { max-width: 800px; margin: auto; padding: 40px 20px; text-align: center; overflow-y: auto; }
+    .landing-container h1 { color: var(--primary-cyan); font-size: 2rem; margin-bottom: 20px; }
+    .instructions { background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 25px; text-align: left; margin-bottom: 30px; line-height: 1.6; }
+    .instructions h3 { color: var(--primary-cyan); margin-bottom: 15px; }
+    .instructions ul { margin-left: 20px; }
+    .start-btn { background: var(--primary-blue); color: #fff; border: none; padding: 15px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+    .start-btn:hover { background: #1565c0; transform: scale(1.05); }
+
+    /* Header */
+    .header { background-color: var(--surface-color); border-bottom: 2px solid var(--primary-cyan); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 50; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    .header h1 { font-size: 1.2rem; font-weight: 600; color: var(--primary-cyan); }
+    .timer-container { font-size: 1.2rem; font-weight: bold; background: #2a2a2a; padding: 5px 15px; border-radius: 5px; border: 1px solid var(--primary-blue); }
+    
+    /* Mobile Top Bar (Toggle Palette & Submit) */
+    .mobile-top-bar { display: none; width: 100%; flex-shrink: 0; z-index: 40; border-bottom: 1px solid var(--border-color); }
+    .mobile-top-bar button { flex: 1; padding: 12px; border: none; font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; }
+    .btn-toggle-top { background: #2a2a2a; color: var(--primary-cyan); border-right: 1px solid var(--border-color) !important; }
+    .btn-submit-top { background: var(--color-answered); color: #fff; }
+
+    /* Main Layout */
+    .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+    
+    /* Quiz Left Panel */
+    .quiz-left-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Question Scrolling Area */
+    .question-scroll-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; }
+    .q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1.1rem; color: var(--primary-cyan); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .question-text { font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px; }
+    .question-tamil { font-size: 1.1rem; line-height: 1.6; color: var(--primary-cyan); margin-bottom: 25px; }
+    
+    .options-list { display: flex; flex-direction: column; gap: 12px; }
+    .option-label { display: flex; align-items: center; padding: 12px 15px; background: #2a2a2a; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .option-label:hover { border-color: var(--primary-cyan); background: #333; }
+    .option-label input { margin-right: 15px; transform: scale(1.2); accent-color: var(--primary-cyan); }
+    
+    /* Pinned Action Buttons Footer */
+    .action-buttons { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 20px; background: var(--surface-color); border-top: 1px solid var(--border-color); z-index: 10; box-shadow: 0 -4px 10px rgba(0,0,0,0.3); }
+    .btn { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; color: #fff; text-transform: uppercase; font-size: 0.85rem; display: flex; justify-content: center; align-items: center; text-align: center; }
+    .btn-prev { background: #424242; }
+    .btn-prev:hover { background: #616161; }
+    .btn-clear { background: #f44336; }
+    .btn-clear:hover { background: #d32f2f; }
+    .btn-mark { background: var(--color-marked); }
+    .btn-mark:hover { background: #7b1fa2; }
+    .btn-save { background: var(--primary-blue); margin-left: auto; }
+    .btn-save:hover { background: #1565c0; }
+
+    /* Palette Section */
+    .palette-section { width: 320px; background: var(--surface-color); border-left: 1px solid var(--border-color); display: flex; flex-direction: column; transition: transform 0.3s ease; flex-shrink: 0; }
+    .palette-header { padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+    .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px; overflow-y: auto; }
+    .q-bubble { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.9rem; color: #fff; background: var(--color-not-visited); border: 2px solid transparent; }
+    .q-bubble.active { border-color: var(--primary-cyan); transform: scale(1.1); box-shadow: 0 0 8px var(--primary-cyan); }
+    
+    .status-0 { background: var(--color-not-visited); color: #000; } 
+    .status-1 { background: var(--color-not-answered); } 
+    .status-2 { background: var(--color-answered); } 
+    .status-3 { background: var(--color-marked); } 
+    .status-4 { background: var(--color-marked); position: relative; } 
+    .status-4::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 8px; height: 8px; background: var(--color-answered); border-radius: 50%; border: 1px solid #fff; }
+
+    .legend { padding: 15px; font-size: 0.8rem; border-top: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-box { width: 15px; height: 15px; border-radius: 3px; }
+    .btn-submit-desktop { background: var(--color-answered); width: 100%; padding: 12px; }
+
+    /* Custom Modals (No native alerts) */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+    .modal-content { background: var(--surface-color); padding: 30px; border-radius: 10px; width: 100%; max-width: 500px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .modal-content h2 { color: var(--primary-cyan); margin-bottom: 20px; }
+    .modal-actions { display: flex; justify-content: center; gap: 15px; margin-top: 25px; }
+    
+    /* Results View */
+    .results-container { max-width: 900px; margin: auto; padding: 40px 20px; text-align: center; overflow-y: auto; width: 100%; }
+    .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 30px 0; }
+    .stat-box { background: #2a2a2a; padding: 20px; border-radius: 8px; border-bottom: 4px solid #666; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .stat-box.st-score { border-color: var(--primary-cyan); grid-column: span 2; }
+    .stat-box.st-correct { border-color: var(--color-answered); }
+    .stat-box.st-wrong { border-color: var(--color-not-answered); }
+    .stat-box h3 { font-size: 2.5rem; margin-bottom: 5px; }
+    .stat-box.st-score h3 { font-size: 3.5rem; color: var(--primary-cyan); }
+    
+    /* Tabbed Review Section */
+    #detailed-review-section { display: none; margin-top: 40px; }
+    .review-tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
+    .tab-btn { background: #2a2a2a; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 12px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; flex: 1; min-width: 110px; text-align: center; transition: 0.2s; }
+    .tab-btn:hover { background: #333; }
+    .tab-btn.active { color: #fff; border-bottom: 3px solid; }
+    .tab-btn[data-tab="correct"].active { border-color: var(--color-answered); background: rgba(76, 175, 80, 0.1); }
+    .tab-btn[data-tab="wrong"].active { border-color: var(--color-not-answered); background: rgba(244, 67, 54, 0.1); }
+    .tab-btn[data-tab="unattempted"].active { border-color: var(--color-not-visited); background: rgba(158, 158, 158, 0.1); }
+    
+    .tab-content { display: none; text-align: left; }
+    .tab-content.active { display: block; }
+    
+    .review-item { padding: 20px; background: #2a2a2a; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid var(--border-color); }
+    .review-item.correct { border-left-color: var(--color-answered); }
+    .review-item.wrong { border-left-color: var(--color-not-answered); }
+    .review-item.unattempted { border-left-color: var(--color-not-visited); }
+    
+    .answer-tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; margin-top: 10px; }
+    .tag-correct { background: rgba(76, 175, 80, 0.2); color: #81c784; border: 1px solid #4caf50; }
+    .tag-wrong { background: rgba(244, 67, 54, 0.2); color: #e57373; border: 1px solid #f44336; }
+    .tag-unattempted { background: rgba(158, 158, 158, 0.2); color: #e0e0e0; border: 1px solid #9e9e9e; }
+    
+    .explanation-box { margin-top: 12px; padding: 12px; background: #1e1e1e; border-radius: 5px; border-left: 3px solid var(--primary-cyan); font-size: 0.95rem; line-height: 1.5; color: #ddd; }
+
+    /* MOBILE SPECIFIC OVERRIDES */
+    @media (max-width: 768px) {
+        .mobile-top-bar { display: flex; }
+        .palette-section { position: absolute; top: 0; right: 0; height: 100%; transform: translateX(100%); z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+        .palette-section.open { transform: translateX(0); }
+        
+        .result-grid { grid-template-columns: 1fr; }
+        .stat-box.st-score { grid-column: span 1; }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+        .btn-save { grid-column: span 2; margin-left: 0; padding: 15px; font-size: 1.1rem; order: 1; }
+        .btn-mark { order: 2; padding: 12px; }
+        .btn-clear { order: 3; padding: 12px; }
+        .btn-prev { grid-column: span 2; order: 4; padding: 12px; }
+    }
+</style>
+</head>
+<body>
+
+<!-- VIEW 1: Landing Page -->
+<div id="view-landing" class="view active">
+    <div class="landing-container">
+        <h1>RRB CBT: UNESCO Sites</h1>
+        <div class="instructions">
+            <h3>📝 Instructions:</h3>
+            <ul>
+                <li><strong>Total Questions:</strong> 50 (Bilingual: English & Tamil).</li>
+                <li><strong>Time Allotted:</strong> 15 Minutes.</li>
+                <li><strong>Marking Scheme:</strong> +1 mark for correct answers, <strong>-0.33 marks</strong> for incorrect answers.</li>
+                <li>Questions are shuffled automatically for every attempt.</li>
+                <li>Use the Question Palette to navigate. You can Mark questions for review.</li>
+                <li>Ensure you have a stable connection. Do not refresh the page during the exam.</li>
+            </ul>
+        </div>
+        <button class="start-btn" onclick="startQuiz()">I am ready to begin</button>
+    </div>
+</div>
+
+<!-- VIEW 2: Main Quiz -->
+<div id="view-quiz" class="view">
+    
+    <div class="header">
+        <h1>UNESCO CITES INDIA</h1>
+        <div class="timer-container" id="timer">15:00</div>
+    </div>
+
+    <!-- Mobile Explicit Top Bar -->
+    <div class="mobile-top-bar">
+        <button class="btn-toggle-top" onclick="togglePalette()">☰ Question Palette</button>
+        <button class="btn-submit-top" onclick="showSubmitConfirm()">Submit Exam</button>
+    </div>
+
+    <div class="main-container">
+        
+        <!-- Question Panel (Scrollable content + Fixed Footer) -->
+        <div class="quiz-left-panel">
+            
+            <div class="question-scroll-area">
+                <div class="q-header">
+                    <span id="q-no">Question 1</span>
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Negative Marks: -0.33</span>
+                </div>
+                
+                <div class="question-text" id="q-text-en">Loading...</div>
+                <div class="question-tamil" id="q-text-ta">ஏற்றுகிறது...</div>
+                
+                <div class="options-list" id="options-container"></div>
+            </div>
+            
+            <!-- Fixed Action Buttons Footer -->
+            <div class="action-buttons">
+                <button class="btn btn-save" onclick="saveAndNext()">Save & Next ►</button>
+                <button class="btn btn-mark" onclick="markAndNext()">Mark & Next</button>
+                <button class="btn btn-clear" onclick="clearResponse()">Clear</button>
+                <button class="btn btn-prev" onclick="prevQuestion()">◄ Previous</button>
+            </div>
+            
+        </div>
+        
+        <!-- Collapsible Palette -->
+        <div class="palette-section" id="palette">
+            <div class="palette-header">
+                <span>Question Palette</span>
+                <button onclick="togglePalette()" class="btn btn-prev" style="padding: 5px; display: none;" id="close-palette-btn">X</button>
+            </div>
+            <div class="palette-grid" id="palette-grid"></div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-box status-2"></div> Answered</div>
+                <div class="legend-item"><div class="legend-box status-1"></div> Not Answered</div>
+                <div class="legend-item"><div class="legend-box status-0"></div> Not Visited</div>
+                <div class="legend-item"><div class="legend-box status-3"></div> Marked</div>
+                <div class="legend-item"><div class="legend-box status-4"></div> Ans & Marked</div>
+            </div>
+            <div style="padding: 15px;">
+                <button class="btn btn-submit btn-submit-desktop" onclick="showSubmitConfirm()">SUBMIT EXAM</button>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-content">
+        <h2>Submit Exam?</h2>
+        <p>Are you sure you want to submit? You will not be able to change your answers.</p>
+        <p id="unanswered-warning" style="color: var(--color-not-answered); margin-top: 10px; font-weight: bold; display: none;"></p>
+        <div class="modal-actions">
+            <button class="btn btn-prev" onclick="closeSubmitConfirm()">No, Go Back</button>
+            <button class="btn btn-submit" style="width: auto; margin-top: 0; padding: 10px 20px;" onclick="submitExam()">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW 3: Results & Review -->
+<div id="view-results" class="view">
+    <div class="results-container">
+        <h1 style="color: var(--primary-cyan); font-size: 2.2rem; margin-bottom: 20px;">Exam Submitted Successfully</h1>
+        
+        <div class="result-grid">
+            <div class="stat-box st-score">
+                <div>Final Score</div>
+                <h3 id="res-score">0.00</h3>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">(Out of 50)</div>
+            </div>
+            <div class="stat-box st-correct">
+                <h3 id="res-correct">0</h3>
+                <div>Correct</div>
+            </div>
+            <div class="stat-box st-wrong">
+                <h3 id="res-wrong">0</h3>
+                <div>Incorrect</div>
+            </div>
+        </div>
+        
+        <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 25px;">Unattempted Questions: <strong id="res-unattempted" style="color: #fff;">0</strong></p>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;" id="post-exam-actions">
+            <button class="btn btn-save" onclick="showDetailedReview()">View Detailed Review</button>
+            <button class="btn btn-prev" onclick="location.reload()">Restart Quiz</button>
+        </div>
+        
+        <!-- 3-Section Tabbed Review -->
+        <div id="detailed-review-section">
+            <h2 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Test Review</h2>
+            
+            <div class="review-tabs">
+                <button class="tab-btn" data-tab="correct" onclick="switchTab('correct')">Correct (<span id="tab-count-correct">0</span>)</button>
+                <button class="tab-btn" data-tab="wrong" onclick="switchTab('wrong')">Incorrect (<span id="tab-count-wrong">0</span>)</button>
+                <button class="tab-btn" data-tab="unattempted" onclick="switchTab('unattempted')">Unattempted (<span id="tab-count-unattempted">0</span>)</button>
+            </div>
+            
+            <div id="review-content-correct" class="tab-content"></div>
+            <div id="review-content-wrong" class="tab-content"></div>
+            <div id="review-content-unattempted" class="tab-content"></div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+// Base Data containing 50 questions
+const baseQuizData = [
+    // ================= 45 STANDARD MCQS (Q1 - Q45) =================
+    // 1
+    {
+        qE: "Which German chemist first grouped elements into Triads in 1829?",
+        qT: "1829-ஆம் ஆண்டு தனிமங்களை முதன்முதலில் மும்மைகளாக வகைப்படுத்திய ஜெர்மன் வேதியியலாளர் யார்?",
+        oE: ["Lothar Meyer", "Johann Dobereiner", "John Newlands", "Henry Moseley"],
+        oT: ["லோதர் மேயர்", "ஜோகன் டாபரீனர்", "ஜான் நியூலேண்ட்ஸ்", "ஹென்றி மோஸ்லி"],
+        a: 1,
+        exp: "Johann Dobereiner grouped elements into triads in 1829, showing that the atomic weight of the middle element was roughly the average of the other two."
+    },
+    // 2
+    {
+        qE: "Which of the following is a valid Dobereiner's Triad?",
+        qT: "பின்வருவனவற்றில் சரியான டாபரீனரின் மும்மை எது?",
+        oE: ["Li, Na, K", "Li, Be, B", "Na, Mg, Al", "C, N, O"],
+        oT: ["Li, Na, K", "Li, Be, B", "Na, Mg, Al", "C, N, O"],
+        a: 0,
+        exp: "Lithium (7), Sodium (23), and Potassium (39) form a Dobereiner's Triad, along with Ca-Sr-Ba and Cl-Br-I."
+    },
+    // 3
+    {
+        qE: "Which French geologist made a cylindrical table of elements in 1862?",
+        qT: "1862-ஆம் ஆண்டு தனிமங்களின் உருளை வடிவ அட்டவணையை உருவாக்கிய பிரெஞ்சு புவியியலாளர் யார்?",
+        oE: ["Dmitri Mendeleev", "John Newlands", "A. E. B. de Chancourtois", "Lothar Meyer"],
+        oT: ["டிமிட்ரி மெண்டலீவ்", "ஜான் நியூலேண்ட்ஸ்", "ஏ. இ. பி. டி சான்கோர்டாய்ஸ்", "லோதர் மேயர்"],
+        a: 2,
+        exp: "French geologist A. E. B. de Chancourtois arranged known elements by increasing atomic weights in a cylindrical table in 1862."
+    },
+    // 4
+    {
+        qE: "Up to which element did John Alexander Newlands's Law of Octaves hold true?",
+        qT: "ஜான் அலெக்சாண்டர் நியூலேண்ட்ஸின் எண்ம விதி எந்தத் தனிமம் வரை மட்டுமே சரியாகப் பொருந்தியது?",
+        oE: ["Potassium", "Magnesium", "Chlorine", "Calcium"],
+        oT: ["பொட்டாசியம்", "மெக்னீசியம்", "குளோரின்", "கால்சியம்"],
+        a: 3,
+        exp: "Propounded in 1865, Newlands's Law of Octaves seemed to be true only for elements up to calcium."
+    },
+    // 5
+    {
+        qE: "Which award was presented to John Newlands in 1887 by the Royal Society of London for his Law of Octaves?",
+        qT: "எண்ம விதிக்காக 1887-ஆம் ஆண்டு லண்டன் ராயல் சொசைட்டியால் ஜான் நியூலேண்ட்ஸுக்கு வழங்கப்பட்ட விருது எது?",
+        oE: ["Copley Medal", "Davy Medal", "Faraday Medal", "Nobel Prize"],
+        oT: ["கோப்லி பதக்கம்", "டேவி பதக்கம்", "ஃபாரடே பதக்கம்", "நோபல் பரிசு"],
+        a: 1,
+        exp: "John Newlands was awarded the Davy Medal in 1887 by the Royal Society of London."
+    },
+    // 6
+    {
+        qE: "Which German chemist independently proposed the Periodic Law in 1869 alongside Russian chemist Dmitri Mendeleev?",
+        qT: "1869-ஆம் ஆண்டு ரஷ்ய வேதியியலாளர் டிமிட்ரி மெண்டலீவுடன் இணைந்து தனித்தனியாக ஆவர்த்தன விதியை முன்மொழிந்த ஜெர்மன் வேதியியலாளர் யார்?",
+        oE: ["Lothar Meyer", "Johann Dobereiner", "Henry Moseley", "Max Planck"],
+        oT: ["லோதர் மேயர்", "ஜோகன் டாபரீனர்", "ஹென்றி மோஸ்லி", "மாக்ஸ் பிளாங்க்"],
+        a: 0,
+        exp: "Dmitri Mendeleev and Lothar Meyer independently proposed the Periodic Law in 1869 based on increasing atomic weights."
+    },
+    // 7
+    {
+        qE: "How many groups were present in the Modified Mendeleev's Periodic Table?",
+        qT: "மாற்றியமைக்கப்பட்ட மெண்டலீவ் தனிம வரிசை அட்டவணையில் எத்தனை தொகுதிகள் இருந்தன?",
+        oE: ["Seven", "Eight", "Nine", "Eighteen"],
+        oT: ["ஏழு", "எட்டு", "ஒன்பது", "பதினெட்டு"],
+        a: 2,
+        exp: "Modified Mendeleev's Periodic Table had nine groups numbered from I to VIII and 0, and seven periods."
+    },
+    // 8
+    {
+        qE: "Which period in Modified Mendeleev's Periodic Table was considered an incomplete period?",
+        qT: "மாற்றியமைக்கப்பட்ட மெண்டலீவ் தனிம வரிசை அட்டவணையில் எந்தத் தொடர் முழுமையடையாத தொடராகக் கருதப்பட்டது?",
+        oE: ["Fourth period", "Fifth period", "Sixth period", "Seventh period"],
+        oT: ["நான்காவது தொடர்", "ஐந்தாவது தொடர்", "ஆறாவது தொடர்", "ஏழாவது தொடர்"],
+        a: 3,
+        exp: "In Modified Mendeleev's Periodic Table, the seventh period was an incomplete period."
+    },
+    // 9
+    {
+        qE: "How many elements are present in the Lanthanide series?",
+        qT: "லாந்தனைடு தொடரில் எத்தனை தனிமங்கள் உள்ளன?",
+        oE: ["10", "14", "18", "32"],
+        oT: ["10", "14", "18", "32"],
+        a: 1,
+        exp: "Both the Lanthanide series (following lanthanum) and the Actinide series (following actinium) contain 14 elements each."
+    },
+    // 10
+    {
+        qE: "Which pair of elements is an example of Mendeleev placing a higher atomic mass element before a lower atomic mass element?",
+        qT: "மெண்டலீவ் அட்டவணையில் அதிக அணு நிறை கொண்ட தனிமம் குறைந்த அணு நிறை கொண்ட தனிமத்திற்கு முன்பாக வைக்கப்பட்டதற்கு உதாரணம் எது?",
+        oE: ["Cobalt before Nickel", "Sodium before Magnesium", "Carbon before Nitrogen", "Chlorine before Argon"],
+        oT: ["நிக்கலுக்கு முன்பாக கோபால்ட்", "மெக்னீசியத்திற்கு முன்பாக சோடியம்", "நைட்ரஜனுக்கு முன்பாக கார்பன்", "ஆர்கானுக்கு முன்பாக குளோரின்"],
+        a: 0,
+        exp: "In Mendeleev's table, Argon (39.9) was placed before Potassium (39.1), Cobalt (58.9) before Nickel (58.6), and Tellurium (127.9) before Iodine (126.9)."
+    },
+    // 11
+    {
+        qE: "Who proposed the Modern Periodic Law in 1913 based on atomic number?",
+        qT: "1913-ஆம் ஆண்டு அணு எண்ணின் அடிப்படையில் நவீன ஆவர்த்தன விதியை முன்மொழிந்தவர் யார்?",
+        oE: ["Dmitri Mendeleev", "John Newlands", "Henry Moseley", "Lothar Meyer"],
+        oT: ["டிமிட்ரி மெண்டலீவ்", "ஜான் நியூலேண்ட்ஸ்", "ஹென்றி மோஸ்லி", "லோதர் மேயர்"],
+        a: 2,
+        exp: "British physicist Henry Moseley showed in 1913 that atomic number is a more fundamental property than atomic weight."
+    },
+    // 12
+    {
+        qE: "What is the repetition of similar properties of elements after regular intervals called?",
+        qT: "குறிப்பிட்ட இடைவெளிகளுக்குப் பிறகு தனிமங்களின் ஒத்த பண்புகள் மீண்டும் தோன்றுவது எவ்வாறு அழைக்கப்படுகிறது?",
+        oE: ["Ionisation", "Electronegativity", "Coagulation", "Periodicity"],
+        oT: ["அயனியாக்கம்", "எலக்ட்ரான் கவர்தன்மை", "கூழ்மத் திரிதல்", "ஆவர்த்தனத் தன்மை"],
+        a: 3,
+        exp: "The periodic repetition of physical and chemical properties at regular intervals is called periodicity."
+    },
+    // 13
+    {
+        qE: "Which orbitals are filled in the fourth period (n = 4) of the modern periodic table?",
+        qT: "நவீன தனிம வரிசை அட்டவணையின் நான்காவது தொடரில் (n = 4) எந்த ஆர்பிட்டால்கள் நிரப்பப்படுகின்றன?",
+        oE: ["4s, 4p", "4s, 3d, 4p", "4s, 4d, 4p", "4s, 4f, 4p"],
+        oT: ["4s, 4p", "4s, 3d, 4p", "4s, 4d, 4p", "4s, 4f, 4p"],
+        a: 1,
+        exp: "In the fourth period (n = 4), the 4s, 3d, and 4p orbitals are filled, accommodating 2 + 10 + 6 = 18 electrons."
+    },
+    // 14
+    {
+        qE: "How many electrons are accommodated in the sixth period (n = 6) of the modern periodic table?",
+        qT: "நவீன தனிம வரிசை அட்டவணையின் ஆறாவது தொடரில் (n = 6) எத்தனை எலக்ட்ரான்கள் நிரப்பப்படுகின்றன?",
+        oE: ["32", "18", "8", "14"],
+        oT: ["32", "18", "8", "14"],
+        a: 0,
+        exp: "The sixth period fills the 6s, 4f, 5d, and 6p orbitals, accommodating 2 + 14 + 10 + 6 = 32 electrons."
+    },
+    // 15
+    {
+        qE: "How many vertical columns (groups) are there in the long form of the periodic table according to IUPAC?",
+        qT: "IUPAC பரிந்துரைகளின்படி நீண்ட வடிவ தனிம வரிசை அட்டவணையில் எத்தனை செங்குத்து நிரல்கள் உள்ளன?",
+        oE: ["7", "9", "18", "16"],
+        oT: ["7", "9", "18", "16"],
+        a: 2,
+        exp: "According to IUPAC recommendations, there are 18 vertical columns (groups) numbered from 1 to 18."
+    },
+    // 16
+    {
+        qE: "What is the outermost electronic configuration of s-block elements?",
+        qT: "s-தொகுதி தனிமங்களின் வெளிக்கூட்டு எலக்ட்ரான் அமைப்பு என்ன?",
+        oE: ["np1 to np6", "nd1 to nd10", "nf1 to nf14", "ns1 and ns2"],
+        oT: ["np1 முதல் np6 வரை", "nd1 முதல் nd10 வரை", "nf1 முதல் nf14 வரை", "ns1 மற்றும் ns2"],
+        a: 3,
+        exp: "Group 1 (alkali metals) and Group 2 (alkaline earth metals) have ns1 and ns2 outermost electronic configurations respectively."
+    },
+    // 17
+    {
+        qE: "The compounds of s-block elements are predominantly ionic, with the exception of which element?",
+        qT: "எந்தத் தனிமத்தைத் தவிர மற்ற அனைத்து s-தொகுதி தனிமங்களின் சேர்மங்களும் பெரும்பாலும் அயனிச் சேர்மங்களாக உள்ளன?",
+        oE: ["Lithium", "Beryllium", "Sodium", "Calcium"],
+        oT: ["லித்தியம்", "பெரிலியம்", "சோடியம்", "கால்சியம்"],
+        a: 1,
+        exp: "The compounds of s-block elements are predominantly ionic, with the exception of those of beryllium."
+    },
+    // 18
+    {
+        qE: "Which two blocks of elements are together called the representative elements or main group elements?",
+        qT: "எந்த இரண்டு தொகுதி தனிமங்கள் கூட்டாக பிரதிநிதித்துவ தனிமங்கள் அல்லது முதன்மைத் தொகுதி தனிமங்கள் என அழைக்கப்படுகின்றன?",
+        oE: ["s-block and p-block", "p-block and d-block", "d-block and f-block", "s-block and d-block"],
+        oT: ["s-தொகுதி மற்றும் p-தொகுதி", "p-தொகுதி மற்றும் d-தொகுதி", "d-தொகுதி மற்றும் f-தொகுதி", "s-தொகுதி மற்றும் d-தொகுதி"],
+        a: 0,
+        exp: "The s-block elements (groups 1–2) and p-block elements (groups 13–18) together constitute the representative or main group elements."
+    },
+    // 19
+    {
+        qE: "Elements of Group 16 in the periodic table are known by what family name?",
+        qT: "தனிம வரிசை அட்டவணையில் 16-ஆம் தொகுதி தனிமங்கள் எந்தக் குடும்பப் பெயரால் அழைக்கப்படுகின்றன?",
+        oE: ["Halogens", "Alkali metals", "Chalcogens", "Noble gases"],
+        oT: ["ஹாலஜன்கள்", "கார உலோகங்கள்", "சால்கோஜன்கள்", "மந்த வாயுக்கள்"],
+        a: 2,
+        exp: "Group 16 elements are called chalcogens, while Group 17 elements are called halogens."
+    },
+    // 20
+    {
+        qE: "Which groups in the centre of the periodic table constitute the d-block or transition elements?",
+        qT: "தனிம வரிசை அட்டவணையின் மையத்தில் உள்ள எந்தத் தொகுதிகள் d-தொகுதி அல்லது இடைநிலைத் தனிமங்களை உருவாக்குகின்றன?",
+        oE: ["Groups 1 to 2", "Groups 13 to 18", "Groups 14 to 17", "Groups 3 to 12"],
+        oT: ["தொகுதிகள் 1 முதல் 2 வரை", "தொகுதிகள் 13 முதல் 18 வரை", "தொகுதிகள் 14 முதல் 17 வரை", "தொகுதிகள் 3 முதல் 12 வரை"],
+        a: 3,
+        exp: "Elements of groups 3 to 12 in the centre of the periodic table are characterised by filling inner d-orbitals and are called d-block or transition elements."
+    },
+    // 21
+    {
+        qE: "What is the atomic radius of a hydrogen atom if the bond distance in a hydrogen molecule (H2) is 74 pm?",
+        qT: "ஹைட்ரஜன் மூலக்கூறில் (H2) பிணைப்புத் தூரம் 74 pm எனில், ஒரு ஹைட்ரஜன் அணுவின் அணு ஆரம் எவ்வளவு?",
+        oE: ["18.5 pm", "37 pm", "74 pm", "148 pm"],
+        oT: ["18.5 pm", "37 pm", "74 pm", "148 pm"],
+        a: 1,
+        exp: "The atomic radius of a hydrogen atom is half the bond distance in H2: 74 / 2 = 37 pm."
+    },
+    // 22
+    {
+        qE: "In any period of the periodic table, which group of elements has the largest atomic size?",
+        qT: "தனிம வரிசை அட்டவணையின் எந்த ஒரு தொடரிலும், மிகப்பெரிய அணு அளவைக் கொண்ட தனிமக் குழு எது?",
+        oE: ["Alkali metals", "Halogens", "Chalcogens", "Transition metals"],
+        oT: ["கார உலோகங்கள்", "ஹாலஜன்கள்", "சால்கோஜன்கள்", "இடைநிலை உலோகங்கள்"],
+        a: 0,
+        exp: "In any period, alkali metals at the extreme left have the largest atomic size, while halogens at the extreme right (excluding zero group) have the smallest."
+    },
+    // 23
+    {
+        qE: "What is the modern term for ionisation energy?",
+        qT: "அயனியாக்கும் ஆற்றலுக்கான நவீன கலைச்சொல் என்ன?",
+        oE: ["Electron gain enthalpy", "Electronegativity", "Ionisation enthalpy", "Screening enthalpy"],
+        oT: ["எலக்ட்ரான் நாட்ட என்தால்பி", "எலக்ட்ரான் கவர்தன்மை", "அயனியாக்கும் என்தால்பி", "திரை விளைவு என்தால்பி"],
+        a: 2,
+        exp: "In modern terminology, ionisation energy is known as ionisation enthalpy, and electron affinity is known as electron gain enthalpy."
+    },
+    // 24
+    {
+        qE: "How does ionisation enthalpy change as the atomic size increases?",
+        qT: "அணு அளவு அதிகரிக்கும்போது அயனியாக்கும் என்தால்பி எவ்வாறு மாறுபடுகிறது?",
+        oE: ["It increases", "It remains constant", "It becomes infinite", "It decreases"],
+        oT: ["அதிகரிக்கிறது", "மாறாமல் உள்ளது", "முடிவிலியாகிறது", "குறைகிறது"],
+        a: 3,
+        exp: "As atomic size increases, outermost electrons are held less tightly by the nucleus, making them easier to remove; thus ionisation enthalpy decreases."
+    },
+    // 25
+    {
+        qE: "What is the correct decreasing order of penetration power of electrons in various orbitals of the same shell?",
+        qT: "ஒரே கூட்டில் உள்ள பல்வேறு ஆர்பிட்டால்களின் எலக்ட்ரான் ஊடுருவும் திறனின் சரியான இறங்குவரிசை எது?",
+        oE: ["f > d > p > s", "s > p > d > f", "p > s > d > f", "s > d > p > f"],
+        oT: ["f > d > p > s", "s > p > d > f", "p > s > d > f", "s > d > p > f"],
+        a: 1,
+        exp: "The penetration power of electrons in a given shell decreases in the order s > p > d > f, so s-electrons require the highest ionisation enthalpy."
+    },
+    // 26
+    {
+        qE: "Why do atoms with half-filled or completely filled sub-levels have higher ionisation enthalpy than normally expected?",
+        qT: "பாதியளவு அல்லது முழுமையாக நிரப்பப்பட்ட துணை ஆற்றல் மட்டங்களைக் கொண்ட அணுக்கள் ஏன் எதிர்பார்த்ததை விட அதிக அயனியாக்கும் என்தால்பியைக் கொண்டுள்ளன?",
+        oE: ["Due to extra stability", "Due to larger atomic radius", "Due to high screening effect", "Due to low nuclear charge"],
+        oT: ["கூடுதல் நிலைப்புத்தன்மை காரணமாக", "பெரிய அணு ஆரம் காரணமாக", "அதிக திரை விளைவு காரணமாக", "குறைந்த அணுக்கரு மின்சுமை காரணமாக"],
+        a: 0,
+        exp: "Half-filled and completely filled sub-levels possess extra stability, making it difficult to remove electrons from them."
+    },
+    // 27
+    {
+        qE: "What is the amount of energy released when an isolated gaseous atom accepts an electron to form a monovalent gaseous anion called?",
+        qT: "தனிமைப்படுத்தப்பட்ட வாயு நிலை அணு ஒரு எலக்ட்ரானை ஏற்று ஒற்றை எதிர்மின் அயனியாக மாறும்போது வெளியிடப்படும் ஆற்றல் எவ்வாறு அழைக்கப்படுகிறது?",
+        oE: ["Ionisation enthalpy", "Electronegativity", "Electron gain enthalpy", "Penetration energy"],
+        oT: ["அயனியாக்கும் என்தால்பி", "எலக்ட்ரான் கவர்தன்மை", "எலக்ட்ரான் நாட்ட என்தால்பி", "ஊடுருவல் ஆற்றல்"],
+        a: 2,
+        exp: "Electron affinity, now called electron gain enthalpy, is the energy released when an isolated gaseous atom accepts an electron."
+    },
+    // 28
+    {
+        qE: "How does the metallic property of elements change on moving from left to right across a period?",
+        qT: "ஒரு தொடரில் இடமிருந்து வலமாகச் செல்லும்போது தனிமங்களின் உலோகப் பண்பு எவ்வாறு மாறுபடுகிறது?",
+        oE: ["Increases", "First increases then decreases", "Remains constant", "Decreases"],
+        oT: ["அதிகரிக்கிறது", "முதலில் அதிகரித்து பின்னர் குறைகிறது", "மாறாமல் உள்ளது", "குறைகிறது"],
+        a: 3,
+        exp: "Across a period from left to right, metallic properties decrease while non-metallic properties increase."
+    },
+    // 29
+    {
+        qE: "How does the chemical reactivity of elements change on moving from left to right across a period?",
+        qT: "ஒரு தொடரில் இடமிருந்து வலமாகச் செல்லும்போது தனிமங்களின் வேதி வினைத்திறன் எவ்வாறு மாறுபடுகிறது?",
+        oE: ["Continuously increases", "First decreases, then increases", "Continuously decreases", "First increases, then decreases"],
+        oT: ["தொடர்ந்து அதிகரிக்கிறது", "முதலில் குறைந்து பின்னர் அதிகரிக்கிறது", "தொடர்ந்து குறைகிறது", "முதலில் அதிகரித்து பின்னர் குறைகிறது"],
+        a: 1,
+        exp: "In a period from left to right, the chemical reactivity of elements first decreases and then increases."
+    },
+    // 30
+    {
+        qE: "How does the chemical reactivity of non-metallic elements change on moving down a group?",
+        qT: "ஒரு தொகுதியில் மேலிருந்து கீழாகச் செல்லும்போது அலோகத் தனிமங்களின் வேதி வினைத்திறன் எவ்வாறு மாறுபடுகிறது?",
+        oE: ["Decreases", "Increases", "Remains unchanged", "First decreases then increases"],
+        oT: ["குறைகிறது", "அதிகரிக்கிறது", "மாறாமல் உள்ளது", "முதலில் குறைந்து பின்னர் அதிகரிக்கிறது"],
+        a: 0,
+        exp: "Down a group, chemical reactivity increases for metallic elements but decreases for non-metallic elements."
+    },
+    // 31
+    {
+        qE: "Which element is the most electronegative element in the periodic table?",
+        qT: "தனிம வரிசை அட்டவணையில் மிக அதிக எலக்ட்ரான் கவர்தன்மை கொண்ட தனிமம் எது?",
+        oE: ["Chlorine", "Oxygen", "Fluorine", "Nitrogen"],
+        oT: ["குளோரின்", "ஆக்ஸிஜன்", "ஃபுளோரின்", "நைட்ரஜன்"],
+        a: 2,
+        exp: "Halogens have the highest electronegativity in their respective periods, and Fluorine is the most electronegative element of all."
+    },
+    // 32
+    {
+        qE: "Which of the following is the unit used to measure electronegativity?",
+        qT: "எலக்ட்ரான் கவர்தன்மையை அளவிடப் பயன்படும் அலகு எது?",
+        oE: ["kJ/mole", "eV/atom", "Picometre", "It has no units"],
+        oT: ["kJ/mole", "eV/atom", "பிக்கோமீட்டர்", "அலகு இல்லை"],
+        a: 3,
+        exp: "Electronegativity is a relative number representing the tendency of a bonded atom to attract shared electrons and has no units."
+    },
+    // 33
+    {
+        qE: "Which hybridised state of carbon is the most electronegative?",
+        qT: "கார்பனின் எந்த இனக்கலப்பு நிலை மிக அதிக எலக்ட்ரான் கவர்தன்மையைக் கொண்டுள்ளது?",
+        oE: ["sp3 hybridised", "sp hybridised", "sp2 hybridised", "All are equally electronegative"],
+        oT: ["sp3 இனக்கலப்பு", "sp இனக்கலப்பு", "sp2 இனக்கலப்பு", "அனைத்தும் சமமான எலக்ட்ரான் கவர்தன்மை கொண்டவை"],
+        a: 1,
+        exp: "sp-hybridised carbon is more electronegative than sp2-hybridised carbon, which in turn is more electronegative than sp3-hybridised carbon."
+    },
+    // 34
+    {
+        qE: "According to the chapter facts, how many elements exist naturally and how many are artificially produced?",
+        qT: "பாடக் குறிப்புகளின்படி இயற்கையாக உள்ள தனிமங்கள் மற்றும் செயற்கையாக உருவாக்கப்பட்ட தனிமங்களின் எண்ணிக்கை முறையே எவ்வளவு?",
+        oE: ["88 natural and 24 artificial", "90 natural and 22 artificial", "92 natural and 26 artificial", "80 natural and 32 artificial"],
+        oT: ["88 இயற்கை மற்றும் 24 செயற்கை", "90 இயற்கை மற்றும் 22 செயற்கை", "92 இயற்கை மற்றும் 26 செயற்கை", "80 இயற்கை மற்றும் 32 செயற்கை"],
+        a: 0,
+        exp: "The chapter notes list 88 elements existing in nature and 24 artificially produced elements."
+    },
+    // 35
+    {
+        qE: "Which is the most abundant element found on the Earth's surface?",
+        qT: "பூமியின் மேற்பரப்பில் மிக அதிக அளவில் காணப்படும் தனிமம் எது?",
+        oE: ["Aluminium", "Silicon", "Oxygen", "Iron"],
+        oT: ["அலுமினியம்", "சிலிக்கான்", "ஆக்ஸிஜன்", "இரும்பு"],
+        a: 2,
+        exp: "Oxygen is the most abundant element on the Earth's surface."
+    },
+    // 36
+    {
+        qE: "Which is the most abundant metallic element found in the Earth's crust?",
+        qT: "பூமியின் மேலோட்டில் மிக அதிக அளவில் காணப்படும் உலோகத் தனிமம் எது?",
+        oE: ["Iron", "Copper", "Silver", "Aluminium"],
+        oT: ["இரும்பு", "தாமிரம்", "வெள்ளி", "அலுமினியம்"],
+        a: 3,
+        exp: "Aluminium is the most abundant metallic element in the Earth's crust."
+    },
+    // 37
+    {
+        qE: "Which is the heaviest element found in nature?",
+        qT: "இயற்கையில் காணப்படும் மிகக் கனமான தனிமம் எது?",
+        oE: ["Gold", "Osmium", "Mercury", "Lead"],
+        oT: ["தங்கம்", "ஆஸ்மியம்", "பாதரசம்", "ஈயம்"],
+        a: 1,
+        exp: "Osmium is the heaviest element found in nature, whereas Hydrogen is the lightest element."
+    },
+    // 38
+    {
+        qE: "Which is the lightest metallic element found in nature?",
+        qT: "இயற்கையில் காணப்படும் மிக லேசான உலோகத் தனிமம் எது?",
+        oE: ["Lithium", "Hydrogen", "Sodium", "Beryllium"],
+        oT: ["லித்தியம்", "ஹைட்ரஜன்", "சோடியம்", "பெரிலியம்"],
+        a: 0,
+        exp: "Lithium is the lightest metallic element in nature, while Hydrogen is the lightest non-metallic element."
+    },
+    // 39
+    {
+        qE: "Which non-metallic element exists in the liquid state?",
+        qT: "திரவ நிலையில் உள்ள அலோகத் தனிமம் எது?",
+        oE: ["Mercury", "Chlorine", "Bromine", "Iodine"],
+        oT: ["பாதரசம்", "குளோரின்", "புரோமின்", "அயோடின்"],
+        a: 2,
+        exp: "Bromine is the liquid non-metal, while Mercury is the liquid metal."
+    },
+    // 40
+    {
+        qE: "Which metal is the best conductor of electricity?",
+        qT: "மின்சாரத்தை மிகச் சிறப்பாகக் கடத்தும் உலோகம் எது?",
+        oE: ["Copper", "Gold", "Aluminium", "Silver"],
+        oT: ["தாமிரம்", "தங்கம்", "அலுமினியம்", "வெள்ளி"],
+        a: 3,
+        exp: "Silver is the best metallic conductor of electricity."
+    },
+    // 41
+    {
+        qE: "Which is the most malleable element found in nature?",
+        qT: "இயற்கையில் காணப்படும் அதிக தகடாகும் தன்மை கொண்ட தனிமம் எது?",
+        oE: ["Silver", "Gold", "Aluminium", "Copper"],
+        oT: ["வெள்ளி", "தங்கம்", "அலுமினியம்", "தாமிரம்"],
+        a: 1,
+        exp: "Gold is the most malleable element found in nature."
+    },
+    // 42
+    {
+        qE: "Which element has the maximum electron affinity (maximum tendency to accept electrons) in nature?",
+        qT: "இயற்கையில் அதிகபட்ச எலக்ட்ரான் நாட்டத்தைக் கொண்ட தனிமம் எது?",
+        oE: ["Chlorine", "Fluorine", "Oxygen", "Bromine"],
+        oT: ["குளோரின்", "ஃபுளோரின்", "ஆக்ஸிஜன்", "புரோமின்"],
+        a: 0,
+        exp: "Chlorine has the maximum electron affinity in nature, whereas Fluorine has the highest electronegativity."
+    },
+    // 43
+    {
+        qE: "Which group of the periodic table contains the most gaseous elements?",
+        qT: "தனிம வரிசை அட்டவணையில் அதிக எண்ணிக்கையிலான வாயுத் தனிமங்களைக் கொண்ட தொகுதி எது?",
+        oE: ["Group 1", "Group 16", "Zero group", "Group 2"],
+        oT: ["தொகுதி 1", "தொகுதி 16", "பூஜ்ஜியத் தொகுதி", "தொகுதி 2"],
+        a: 2,
+        exp: "The Zero group (Group 18 / Noble gases) is the group containing the most gaseous elements."
+    },
+    // 44
+    {
+        qE: "What happens to ionisation enthalpy when the screening effect of inner electrons increases?",
+        qT: "உள் எலக்ட்ரான்களின் திரை விளைவு அதிகரிக்கும்போது அயனியாக்கும் என்தால்பி என்னவாகும்?",
+        oE: ["Increases", "Doubles", "Remains constant", "Decreases"],
+        oT: ["அதிகரிக்கிறது", "இரட்டிப்பாகிறது", "மாறாமல் உள்ளது", "குறைகிறது"],
+        a: 3,
+        exp: "When the shielding/screening effect of inner electrons increases, the attraction between the nucleus and outermost electron decreases, lowering the ionisation enthalpy."
+    },
+    // 45
+    {
+        qE: "In Modified Mendeleev's Periodic Table, the first three periods containing 2, 8, and 8 elements are called what?",
+        qT: "மாற்றியமைக்கப்பட்ட மெண்டலீவ் அட்டவணையில் 2, 8 மற்றும் 8 தனிமங்களைக் கொண்ட முதல் மூன்று தொடர்கள் எவ்வாறு அழைக்கப்படுகின்றன?",
+        oE: ["Long periods", "Short periods", "Incomplete periods", "Transition periods"],
+        oT: ["நீண்ட தொடர்கள்", "குறுகிய தொடர்கள்", "முழுமையடையாத தொடர்கள்", "இடைநிலைத் தொடர்கள்"],
+        a: 1,
+        exp: "The first three periods containing 2, 8, and 8 elements respectively are called short periods."
+    },
+
+    // ================= 5 STATEMENT-BASED QUESTIONS (Q46 - Q50) =================
+    // 46 (Ans: 0 - Only 1)
+    {
+        qE: "Consider the following statements:\n1. In the modern periodic table, atomic and ionic radii increase on moving down a group.\n2. In the modern periodic table, electronegativity increases on moving down a group.",
+        qT: "பின்வரும் கூற்றுகளைக் கவனியுங்கள்:\n1. நவீன தனிம வரிசை அட்டவணையில் ஒரு தொகுதியில் கீழே செல்லும்போது அணு மற்றும் அயனி ஆரங்கள் அதிகரிக்கின்றன.\n2. நவீன தனிம வரிசை அட்டவணையில் ஒரு தொகுதியில் கீழே செல்லும்போது எலக்ட்ரான் கவர்தன்மை அதிகரிக்கிறது.",
+        oE: ["Only 1", "Only 2", "Both 1 and 2", "Neither 1 nor 2"],
+        oT: ["1 மட்டும்", "2 மட்டும்", "1 மற்றும் 2 இரண்டும்", "1 மற்றும் 2 இரண்டும் இல்லை"],
+        a: 0,
+        exp: "Statement 1 is correct. Statement 2 is incorrect because electronegativity decreases on moving down a group due to increased atomic radius."
+    },
+    // 47 (Ans: 1 - Only 2)
+    {
+        qE: "Consider the following statements:\n1. Mendeleev's Periodic Table provided separate spaces for placing isotopes.\n2. Mendeleev's Periodic Table placed alkali metals along with coinage metals like copper, silver, and gold.",
+        qT: "பின்வரும் கூற்றுகளைக் கவனியுங்கள்:\n1. மெண்டலீவ் தனிம வரிசை அட்டவணை ஐசோடோப்புகளை வைப்பதற்குத் தனி இடங்களை வழங்கியது.\n2. மெண்டலீவ் தனிம வரிசை அட்டவணை கார உலோகங்களை தாமிரம், வெள்ளி மற்றும் தங்கம் போன்ற நாணய உலோகங்களுடன் ஒன்றாக வைத்தது.",
+        oE: ["Only 1", "Only 2", "Both 1 and 2", "Neither 1 nor 2"],
+        oT: ["1 மட்டும்", "2 மட்டும்", "1 மற்றும் 2 இரண்டும்", "1 மற்றும் 2 இரண்டும் இல்லை"],
+        a: 1,
+        exp: "Statement 1 is incorrect because Mendeleev's table had no provision for placing isotopes. Statement 2 is correct."
+    },
+    // 48 (Ans: 2 - Both 1 and 2)
+    {
+        qE: "Consider the following statements:\n1. Electron gain enthalpy is the property of an isolated gaseous atom.\n2. Electronegativity is the property of a bonded atom in a molecule.",
+        qT: "பின்வரும் கூற்றுகளைக் கவனியுங்கள்:\n1. எலக்ட்ரான் நாட்ட என்தால்பி என்பது தனிமைப்படுத்தப்பட்ட வாயு நிலை அணுவின் பண்பாகும்.\n2. எலக்ட்ரான் கவர்தன்மை என்பது ஒரு மூலக்கூறில் பிணைக்கப்பட்டுள்ள அணுவின் பண்பாகும்.",
+        oE: ["Only 1", "Only 2", "Both 1 and 2", "Neither 1 nor 2"],
+        oT: ["1 மட்டும்", "2 மட்டும்", "1 மற்றும் 2 இரண்டும்", "1 மற்றும் 2 இரண்டும் இல்லை"],
+        a: 2,
+        exp: "Both statements are correct distinctions between electron gain enthalpy and electronegativity."
+    },
+    // 49 (Ans: 3 - Neither 1 nor 2)
+    {
+        qE: "Consider the following statements:\n1. Ionisation enthalpy decreases with an increase in nuclear charge.\n2. The metallic property of elements decreases from top to bottom in a group.",
+        qT: "பின்வரும் கூற்றுகளைக் கவனியுங்கள்:\n1. அணுக்கரு மின்சுமை அதிகரிக்கும்போது அயனியாக்கும் என்தால்பி குறைகிறது.\n2. ஒரு தொகுதியில் மேலிருந்து கீழாகச் செல்லும்போது தனிமங்களின் உலோகப் பண்பு குறைகிறது.",
+        oE: ["Only 1", "Only 2", "Both 1 and 2", "Neither 1 nor 2"],
+        oT: ["1 மட்டும்", "2 மட்டும்", "1 மற்றும் 2 இரண்டும்", "1 மற்றும் 2 இரண்டும் இல்லை"],
+        a: 3,
+        exp: "Both statements are incorrect. Ionisation enthalpy increases with nuclear charge, and metallic property increases from top to bottom in a group."
+    },
+    // 50 (Ans: 0 - Only 1)
+    {
+        qE: "Consider the following statements:\n1. All orbitals in the valence shell of noble gases are completely filled by electrons.\n2. In the modern periodic table, the third period contains 18 elements.",
+        qT: "பின்வரும் கூற்றுகளைக் கவனியுங்கள்:\n1. மந்த வாயுக்களின் இணைதிறன் கூட்டில் உள்ள அனைத்து ஆர்பிட்டால்களும் எலக்ட்ரான்களால் முழுமையாக நிரப்பப்பட்டுள்ளன.\n2. நவீன தனிம வரிசை அட்டவணையில் மூன்றாவது தொடரில் 18 தனிமங்கள் உள்ளன.",
+        oE: ["Only 1", "Only 2", "Both 1 and 2", "Neither 1 nor 2"],
+        oT: ["1 மட்டும்", "2 மட்டும்", "1 மற்றும் 2 இரண்டும்", "1 மற்றும் 2 இரண்டும் இல்லை"],
+        a: 0,
+        exp: "Statement 1 is correct. Statement 2 is incorrect because the third period (3s, 3p) contains 8 elements, while the fourth and fifth periods contain 18 elements."
+    }
+];
+let quizData = [];
+let currentQ = 0;
+let answers = [];
+let status = []; // 0: Not Visited, 1: Not Answered, 2: Answered, 3: Marked, 4: Answered & Marked
+
+// Shuffle array algorithm
+function shuffleArray(array) {
+    let shuffled = array.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+// Switch Views
+function switchView(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+}
+
+function startQuiz() {
+    quizData = shuffleArray(baseQuizData);
+    answers = new Array(50).fill(null);
+    status = new Array(50).fill(0);
+    
+    switchView('view-quiz');
+    
+    buildPalette();
+    loadQuestion(0);
+    startTimer();
+    
+    if(window.innerWidth <= 768) {
+        document.getElementById('close-palette-btn').style.display = 'block';
+    }
+}
+
+function buildPalette() {
+    const grid = document.getElementById('palette-grid');
+    grid.innerHTML = '';
+    for(let i=0; i<50; i++) {
+        let bubble = document.createElement('div');
+        bubble.className = 'q-bubble status-' + status[i];
+        bubble.innerText = (i+1);
+        bubble.id = 'pb-' + i;
+        bubble.onclick = () => jumpToQuestion(i);
+        grid.appendChild(bubble);
+    }
+}
+
+function syncAnswer() {
+    let selected = document.querySelector('input[name="opt"]:checked');
+    if(selected) {
+        answers[currentQ] = parseInt(selected.value);
+    } else {
+        answers[currentQ] = null;
+    }
+}
+
+function updatePaletteCSS() {
+    for(let i=0; i<50; i++) {
+        let bubble = document.getElementById('pb-' + i);
+        bubble.className = 'q-bubble status-' + status[i];
+        if(i === currentQ) bubble.classList.add('active');
+    }
+}
+
+function loadQuestion(index) {
+    if(status[currentQ] === 0) {
+        status[currentQ] = (answers[currentQ] !== null) ? 2 : 1;
+    }
+    
+    currentQ = index;
+    if(status[currentQ] === 0) status[currentQ] = 1;
+
+    document.getElementById('q-no').innerText = "Question " + (currentQ + 1);
+    
+    // Format statement questions with line breaks
+    let qTextEn = quizData[currentQ].qE.replace(/\n/g, "<br>");
+    let qTextTa = quizData[currentQ].qT.replace(/\n/g, "<br>");
+    
+    document.getElementById('q-text-en').innerHTML = qTextEn;
+    document.getElementById('q-text-ta').innerHTML = qTextTa;
+
+    let optHtml = '';
+    for(let i=0; i<4; i++) {
+        let checked = (answers[currentQ] === i) ? 'checked' : '';
+        optHtml += `
+            <label class="option-label">
+                <input type="radio" name="opt" value="${i}" ${checked} onchange="syncAnswer()">
+                <div>
+                    <div>${quizData[currentQ].oE[i]}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">${quizData[currentQ].oT[i]}</div>
+                </div>
+            </label>
+        `;
+    }
+    document.getElementById('options-container').innerHTML = optHtml;
+    
+    // Clear scroll position to top of container when moving to a new question
+    document.querySelector('.question-scroll-area').scrollTop = 0;
+    
+    updatePaletteCSS();
+}
+
+function jumpToQuestion(i) {
+    syncAnswer();
+    loadQuestion(i);
+    if(window.innerWidth <= 768) togglePalette();
+}
+
+function saveAndNext() {
+    syncAnswer();
+    status[currentQ] = (answers[currentQ] !== null) ? 2 : 1;
+    if(currentQ < 49) loadQuestion(currentQ + 1);
+    else updatePaletteCSS();
+}
+
+function markAndNext() {
+    syncAnswer();
+    status[currentQ] = (answers[currentQ] !== null) ? 4 : 3;
+    if(currentQ < 49) loadQuestion(currentQ + 1);
+    else updatePaletteCSS();
+}
+
+function clearResponse() {
+    answers[currentQ] = null;
+    status[currentQ] = 1;
+    loadQuestion(currentQ);
+}
+
+function prevQuestion() {
+    syncAnswer();
+    if(currentQ > 0) loadQuestion(currentQ - 1);
+}
+
+function togglePalette() {
+    document.getElementById('palette').classList.toggle('open');
+}
+
+// Timer Logic
+let timeLimit = 15 * 60; // 15 mins
+let timerInterval;
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeLimit--;
+        let m = Math.floor(timeLimit / 60).toString().padStart(2, '0');
+        let s = (timeLimit % 60).toString().padStart(2, '0');
+        document.getElementById('timer').innerText = m + ':' + s;
+        if(timeLimit <= 0) {
+            clearInterval(timerInterval);
+            submitExam();
+        }
+    }, 1000);
+}
+
+// Custom Submit Modals
+function showSubmitConfirm() {
+    syncAnswer();
+    let unattempted = answers.filter(a => a === null).length;
+    let warningTxt = document.getElementById('unanswered-warning');
+    if(unattempted > 0) {
+        warningTxt.innerText = `You have ${unattempted} unattempted questions!`;
+        warningTxt.style.display = 'block';
+    } else {
+        warningTxt.style.display = 'none';
+    }
+    document.getElementById('confirm-modal').style.display = 'flex';
+}
+
+function closeSubmitConfirm() {
+    document.getElementById('confirm-modal').style.display = 'none';
+}
+
+function submitExam() {
+    clearInterval(timerInterval);
+    document.getElementById('confirm-modal').style.display = 'none';
+    syncAnswer();
+    
+    let correct = 0, wrong = 0, unattempted = 0;
+    
+    quizData.forEach((q, i) => {
+        if(answers[i] === null) unattempted++;
+        else if(answers[i] === q.a) correct++;
+        else wrong++;
+    });
+    
+    let score = correct - (wrong * 0.3333);
+    
+    document.getElementById('res-score').innerText = score.toFixed(2);
+    document.getElementById('res-correct').innerText = correct;
+    document.getElementById('res-wrong').innerText = wrong;
+    document.getElementById('res-unattempted').innerText = unattempted;
+    
+    switchView('view-results');
+}
+
+// Detailed Review with Tabs
+function showDetailedReview() {
+    let htmlCorrect = '';
+    let htmlWrong = '';
+    let htmlUnattempted = '';
+    
+    quizData.forEach((q, i) => {
+        let isAttempted = answers[i] !== null;
+        let isCorrect = isAttempted && answers[i] === q.a;
+        let cssClass = !isAttempted ? 'unattempted' : (isCorrect ? 'correct' : 'wrong');
+        
+        let chosenText = isAttempted ? q.oE[answers[i]] : "None";
+        let correctText = q.oE[q.a];
+        
+        let qText = q.qE.replace(/\n/g, "<br>");
+        let tagHtml = !isAttempted ? `<span class="answer-tag tag-unattempted">Unattempted</span>` : 
+                      isCorrect ? `<span class="answer-tag tag-correct">Correct (+1.0)</span>` : 
+                      `<span class="answer-tag tag-wrong">Incorrect (-0.33)</span>`;
+                      
+        let explanationText = q.exp || `The correct answer is ${correctText}.`;
+        
+        let itemHtml = `
+            <div class="review-item ${cssClass}">
+                <strong style="font-size: 1.1rem; color: #fff;">Q${i+1}: ${qText}</strong><br>
+                ${tagHtml}
+                <div style="margin-top: 15px; font-size: 0.95rem; display: grid; gap: 8px;">
+                    <div><span style="color: var(--text-secondary)">Your Answer:</span> <span style="color: ${!isAttempted ? '#9e9e9e' : isCorrect ? 'var(--color-answered)' : 'var(--color-not-answered)'}">${chosenText}</span></div>
+                    <div><span style="color: var(--text-secondary)">Correct Answer:</span> <span style="color: var(--color-answered); font-weight: bold;">${correctText}</span></div>
+                </div>
+                <div class="explanation-box">
+                    <strong style="color: var(--primary-cyan);">Explanation:</strong><br>
+                    ${explanationText}
+                </div>
+            </div>
+        `;
+        
+        if (!isAttempted) htmlUnattempted += itemHtml;
+        else if (isCorrect) htmlCorrect += itemHtml;
+        else htmlWrong += itemHtml;
+    });
+    
+    // Inject Content
+    document.getElementById('review-content-correct').innerHTML = htmlCorrect || "<div style='text-align:center; padding: 30px; color: var(--text-secondary);'>No correct answers recorded in this session.</div>";
+    document.getElementById('review-content-wrong').innerHTML = htmlWrong || "<div style='text-align:center; padding: 30px; color: var(--color-answered); font-weight: bold;'>Amazing job! You had no incorrect answers!</div>";
+    document.getElementById('review-content-unattempted').innerHTML = htmlUnattempted || "<div style='text-align:center; padding: 30px; color: var(--text-secondary);'>You attempted every single question. Great effort!</div>";
+    
+    // Setup Tab counts
+    document.getElementById('tab-count-correct').innerText = document.getElementById('res-correct').innerText;
+    document.getElementById('tab-count-wrong').innerText = document.getElementById('res-wrong').innerText;
+    document.getElementById('tab-count-unattempted').innerText = document.getElementById('res-unattempted').innerText;
+    
+    // Display Section
+    document.getElementById('post-exam-actions').style.display = 'none';
+    document.getElementById('detailed-review-section').style.display = 'block';
+    
+    // Default to the first tab that has data
+    if (htmlWrong) switchTab('wrong');
+    else if (htmlCorrect) switchTab('correct');
+    else switchTab('unattempted');
+}
+
+function switchTab(tabId) {
+    // Reset buttons and content visibility
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Activate chosen tab
+    document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+    document.getElementById(`review-content-${tabId}`).classList.add('active');
+}
+</script>
+</body>
+</html>
+
+```
